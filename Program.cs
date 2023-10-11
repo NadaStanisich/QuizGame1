@@ -50,7 +50,8 @@ void addQuiz(Quiz quiz) {
                 cmd.ExecuteNonQuery();
             }
             foreach (var choice in quiz.choices) {
-                using (var cmd = new NpgsqlCommand($"INSERT INTO \"Choices\" (\"text\", \"quizid\") VALUES ('{choice}', {quiz.id})", conn)) {
+                bool isCorrect = quiz.choices.IndexOf(choice) == quiz.correctanswerindex;
+                using (var cmd = new NpgsqlCommand($"INSERT INTO \"Choices\" (\"text\", \"iscorrect\", \"quizid\") VALUES ('{choice}', {isCorrect}, {quiz.id})", conn)) {
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -59,7 +60,6 @@ void addQuiz(Quiz quiz) {
         }
     }
 }
-
 NpgsqlConnection getDbConnection() {
     return new NpgsqlConnection("User Id=postgres;Password=JDivision1979!2023!;Server=db.degdsykyssiponzjmhbq.supabase.co;Port=5432;Database=postgres");
 }
