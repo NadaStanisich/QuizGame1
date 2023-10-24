@@ -6,12 +6,14 @@ var app = builder.Build();
 
 app.MapGet("/", () => "Quiz API");
 app.MapGet("/quiz/{id}", (int id) => getQuiz(id));
-
+app.MapGet("/quizzes", () => getQuizzes());
 
 app.MapPost("/quiz", (Quiz quiz) => addQuiz(quiz));
 
 
 app.Run();
+
+
 
 Quiz getQuiz(int id) {
     Quiz quiz = null;
@@ -40,6 +42,36 @@ Quiz getQuiz(int id) {
     }
     return quiz;
 }
+
+List<Quiz> getQuizzes() {
+    List<Quiz> quizzes = new List<Quiz>();
+    using (var conn = getDbConnection()) {
+        try {
+            conn.Open();
+            using (var cmd = new NpgsqlCommand("SELECT * FROM \"Quizzes\"", conn)) {
+                using (var reader = cmd.ExecuteReader()) {
+                    while (reader.Read()) {
+                        Quiz quiz = new Quiz(reader.GetInt32(0), reader.GetString(1), new List<string>(), reader.GetInt32(2));
+                        quizzes.Add(quiz);
+                    }
+                }
+            }
+            foreach (var quiz in quizzes) {
+                using (var cmd = new NpgsqlCommand($"SELECT \"text\" FROM \"Choices\" WHERE \"quizid\" = {quiz.id}", conn)) {
+                    using (var reader = cmd.ExecuteReader()) {
+                        while (reader.Read()) {
+                            quiz.choices.Add(reader.GetString(0));
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Console.WriteLine(e.Message);
+        }
+    }
+    return quizzes;
+}
+
 
 
 void addQuiz(Quiz quiz) {
